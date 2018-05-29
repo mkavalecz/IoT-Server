@@ -9,11 +9,21 @@
     "dependencies": [
         {
             "name": "ArduinoJson",
-            "version": ">=5.13.1"
+            "version": ">=5.13.1",
+            "authors": [
+                "Benoit Blanchon"
+            ],
+            "frameworks": "arduino",
+            "platforms": "*"
         },
         {
             "name": "WebSockets",
-            "version": ">=2.1.0"
+            "version": ">=2.1.0",
+            "authors": [
+                "Markus Sattler"
+            ],
+            "frameworks": "arduino",
+            "platforms": "atmelavr, espressif8266, espressif32"
         }
     ],
     "version": "0.1",

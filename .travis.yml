@@ -12,15 +12,13 @@
 language: python
 python:
     - "2.7"
-sudo: false
-cache:
-    directories:
-        - "~/.platformio"
 env:
-    - PLATFORMIO_CI_SRC=src/example.ino
+    - PLATFORMIO_CI_SRC=src
 install:
     - pip install -U platformio
     - platformio update
+    - platformio lib -g install 64
+    - platformio lib -g install 549
+    - platformio lib -g update
 script:
     - platformio ci --lib="." --board=d1_mini
-#   - platformio run
