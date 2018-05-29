@@ -1,0 +1,23 @@
+{
+    "name": "IoT-Server",
+    "keywords": "IoT Server, LED, Button, HTML5, jQuery, Bootstrap",
+    "description": "ESP8266 Arduino Library for easily hosting an all-in-one IoT Server",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mkavalecz/IoT-Server.git"
+    },
+    "dependencies": [
+        {
+            "name": "ArduinoJson",
+            "version": ">=5.13.1"
+        },
+        {
+            "name": "WebSockets",
+            "version": ">=2.1.0"
+        }
+    ],
+    "version": "0.1",
+    "license": "MIT",
+    "frameworks": "arduino",
+    "platforms": "espressif8266"
+}
