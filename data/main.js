@@ -1,7 +1,25 @@
 var host = (window.location.protocol !== 'file:') ? window.location.host : "wemos"; // change "wemos" to your ip/domain for debugging
-var setControlValuesRequest;
+
+var buttonTemplate = '<div class="form-row">' +
+    '<div class="col form-group text-center">' +
+    '<label for="#id#Value" class="font-weight-bold">#name#</label>' +
+    '<div class="w-100"></div>' +
+    '<button id="#id#Value" type="button" class="btn"></button>' +
+    '</div>' +
+    '</div>';
+
+var ledTemplate = '<div class="form-row">' +
+    '<div class="col form-group text-center">' +
+    '<label for="#id#Value" class="font-weight-bold">#name#</label>' +
+    '<input id="#id#Value" type="range" class="form-control bg-secondary" min="0" , max="#maxBrightness#" />' +
+    '<p id="#id#Text" class="form-text">N/A</p>' +
+    '</div>' +
+    '</div>';
+
+var containerSelector = '#containerForm';
 
 var IoT_Control_LED = "CONTROL_LED";
+var setControlValuesRequest;
 
 function onLoad() {
     getValues();
@@ -32,14 +50,9 @@ function initGui(data) {
 function initButton(controlId, controlData) {
     var valueInput = $('#' + controlId + 'Value');
     if (!valueInput.length) {
-        $('#containerForm').append(
-            '<div class="form-row">' +
-            '<div class="col form-group text-center">' +
-            '<label for="' + controlId + 'Value" class="font-weight-bold">' + controlData.name + '</label>' +
-            '<div class="w-100"></div>' +
-            '<button id="' + controlId + 'Value"  type="button" class="btn"></button>' +
-            '</div>' +
-            '</div>'
+        $(containerSelector).append(buttonTemplate
+            .replace(new RegExp("#id#", 'g'), controlId)
+            .replace(new RegExp("#name#", 'g'), controlData.name)
         );
         valueInput = $('#' + controlId + 'Value');
     }
@@ -59,14 +72,10 @@ function initLED(controlId, controlData) {
     var valueInput = $('#' + controlId + 'Value');
     var textOutput = $('#' + controlId + 'Text');
     if (!valueInput.length && !textOutput.length) {
-        $('#containerForm').append(
-            '<div class="form-row">' +
-            '<div class="col form-group text-center">' +
-            '<label for="' + controlId + 'Value" class="font-weight-bold">' + controlData.name + '</label>' +
-            '<input id="' + controlId + 'Value" type="range" class="form-control bg-secondary" min="0" , max="' + controlData.maxBrightness + '" />' +
-            '<p id="' + controlId + 'Text" class="form-text">N/A</p>' +
-            '</div>' +
-            '</div>'
+        $(containerSelector).append(ledTemplate
+            .replace(new RegExp("#id#", 'g'), controlId)
+            .replace(new RegExp("#name#", 'g'), controlData.name)
+            .replace(new RegExp("#maxBrightness#", 'g'), controlData.maxBrightness)
         );
         valueInput = $('#' + controlId + 'Value');
         textOutput = $('#' + controlId + 'Text');
