@@ -5,19 +5,34 @@
 
 class IoT_Control {
   protected:
+    const String id;
     const String name;
     const unsigned int pin;
     unsigned int value;
 
   public:
-    IoT_Control(const String name, const unsigned int pin, const unsigned int value)
-        : name(name)
+    IoT_Control(const String id, const String name, const unsigned int pin, const unsigned int value)
+        : id(id)
+        , name(name)
         , pin(pin)
         , value(value) {
     }
 
     virtual void setup() = 0;
     virtual const int loop() = 0;
+    virtual const String getTypeName() const = 0;
+
+    virtual JsonObject& serializeJsonTo(JsonObject& object) const {
+        JsonObject& obj = object.createNestedObject(getId());
+        obj["name"] = getName();
+        obj["type"] = getTypeName();
+        obj["value"] = getValue();
+        return obj;
+    }
+
+    virtual const String getId() const {
+        return id;
+    }
 
     virtual const String getName() const {
         return name;

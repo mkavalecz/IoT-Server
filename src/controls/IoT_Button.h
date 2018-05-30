@@ -11,12 +11,12 @@ class IoT_Button : public IoT_Control {
     unsigned long lastDebounceTime;
     unsigned int oldValue;
 
-  public:
     std::function<void()> onPress;
     std::function<void(bool)> onChange;
 
-    IoT_Button(const String name, const unsigned int pin)
-        : IoT_Control(name, pin, 0)
+  public:
+    IoT_Button(const String id, const String name, const unsigned int pin)
+        : IoT_Control(id, name, pin, 0)
         , pressedState(LOW)
         , debounceDelay(50)
         , lastDebounceTime(0)
@@ -41,6 +41,10 @@ class IoT_Button : public IoT_Control {
     IoT_Button* setOnChange(const std::function<void(bool)> onChange) {
         this->onChange = onChange;
         return this;
+    }
+
+    void manualPress() {
+        this->onPress();
     }
 
     virtual void setup() {
@@ -75,6 +79,10 @@ class IoT_Button : public IoT_Control {
         }
 
         return IOT_STATUS_UNCHANGED;
+    }
+
+    virtual const String getTypeName() const {
+        return "button";
     }
 
     virtual const unsigned int setValue(const unsigned int value) {

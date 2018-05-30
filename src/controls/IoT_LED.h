@@ -9,16 +9,17 @@ class IoT_LED : public IoT_Control {
     const unsigned int maxBrightness;
 
   public:
-    IoT_LED(const String name, const unsigned int pin)
-        : IoT_LED(name, pin, false, 255) {
+    IoT_LED(const String id, const String name, const unsigned int pin)
+        : IoT_LED(id, name, pin, false, 255) {
     }
 
-    IoT_LED(const String name, const unsigned int pin, const bool inverted)
-        : IoT_LED(name, pin, inverted, 255) {
+    IoT_LED(const String id, const String name, const unsigned int pin, const bool inverted)
+        : IoT_LED(id, name, pin, inverted, 255) {
     }
 
-    IoT_LED(const String name, const unsigned int pin, const bool inverted, const unsigned int maxBrightness)
-        : IoT_Control(name, pin, 0)
+    IoT_LED(const String id, const String name, const unsigned int pin, const bool inverted,
+        const unsigned int maxBrightness)
+        : IoT_Control(id, name, pin, 0)
         , inverted(inverted)
         , maxBrightness(maxBrightness) {
     }
@@ -28,16 +29,26 @@ class IoT_LED : public IoT_Control {
     }
 
     virtual const int loop() {
-        analogWrite(pin, value);
+        if (inverted) {
+            analogWrite(pin, maxBrightness - value);
+        } else {
+            analogWrite(pin, value);
+        }
         return IOT_STATUS_UNCHANGED;
     }
 
+    virtual const String getTypeName() const {
+        return "led";
+    }
+
+    virtual JsonObject& serializeJsonTo(JsonObject& object) const {
+        JsonObject& obj = IoT_Control::serializeJsonTo(object);
+        obj["maxBrightness"] = maxBrightness;
+        return obj;
+    }
+
     virtual const unsigned int setValue(const unsigned int value) {
-        if (inverted) {
-            return IoT_Control::setValue(maxBrightness - (value % (maxBrightness + 1)));
-        } else {
-            return IoT_Control::setValue(value % maxBrightness);
-        }
+        return IoT_Control::setValue(value % (maxBrightness + 1));
     }
 
     void enable() {
@@ -50,17 +61,9 @@ class IoT_LED : public IoT_Control {
 
     void blink() {
         if (getValue() == maxBrightness) {
-            if (inverted) {
-                setValue(maxBrightness);
-            } else {
-                setValue(0);
-            }
+            setValue(0);
         } else {
-            if (inverted) {
-                setValue(0);
-            } else {
-                setValue(maxBrightness);
-            }
+            setValue(maxBrightness);
         }
     }
 

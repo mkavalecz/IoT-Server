@@ -1,70 +1,108 @@
-var host = 'wemos'; // change this
+var host = (window.location.protocol !== 'file:') ? window.location.host : "wemos"; // change "wemos" to your ip/domain for debugging
+var setControlValuesRequest;
 
-var getValuesRequest;
-var setValuesRequest;
-var updateSocket;
+var IoT_Control_LED = "CONTROL_LED";
 
 function onLoad() {
     getValues();
 
-    updateSocket = new WebSocket('ws://' + host + ':8080');
-    updateSocket.addEventListener('message', function (event) {
+    new WebSocket('ws://' + host + ':8080').addEventListener('message', function (event) {
         updateGui(JSON.parse(event.data));
-    });
-
-    $('#led1Value').on('input change', function () {
-        setValues({
-            led1: this.value
-        });
-    });
-    $('#led2Value').on('input change', function () {
-        setValues({
-            led2: this.value
-        });
-    });
-    $('#button1Value').on('mousedown mouseup', function (event) {
-        setValues({
-            button1: (event.type === 'mousedown') ? 1 : 0
-        });
     });
 }
 
 function getValues() {
-    if (getValuesRequest !== undefined) {
+    $.get('http://' + host + '/get', function (response) {
+        initGui(response);
+    });
+}
+
+function initGui(data) {
+    $.each(data, function (controlId, controlData) {
+        switch (controlData.type) {
+            case "button":
+                initButton(controlId, controlData);
+            case "led":
+                initLED(controlId, controlData);
+        }
+    });
+    $('#loading').remove();
+}
+
+function initButton(controlId, controlData) {
+    var valueInput = $('#' + controlId + 'Value');
+    if (!valueInput.length) {
+        $('#containerForm').append(
+            '<div class="form-row">' +
+            '<div class="col form-group text-center">' +
+            '<label for="' + controlId + 'Value" class="font-weight-bold">' + controlData.name + '</label>' +
+            '<div class="w-100"></div>' +
+            '<button id="' + controlId + 'Value"  type="button" class="btn"></button>' +
+            '</div>' +
+            '</div>'
+        );
+        valueInput = $('#' + controlId + 'Value');
+    }
+    valueInput.val(controlData.value);
+    valueInput.on('mousedown mouseup', function () {
+        var data = {};
+        data[controlId] = (event.type === 'mousedown') ? 1 : 0;
+        setValues(data);
+    });
+}
+
+function initLED(controlId, controlData) {
+    if (controlId === IoT_Control_LED) {
         return;
     }
 
-    getValuesRequest = $.get('http://' + host + '/get', function (response) {
-        updateGui(response);
-        getValuesRequest = undefined;
+    var valueInput = $('#' + controlId + 'Value');
+    var textOutput = $('#' + controlId + 'Text');
+    if (!valueInput.length && !textOutput.length) {
+        $('#containerForm').append(
+            '<div class="form-row">' +
+            '<div class="col form-group text-center">' +
+            '<label for="' + controlId + 'Value" class="font-weight-bold">' + controlData.name + '</label>' +
+            '<input id="' + controlId + 'Value" type="range" class="form-control bg-secondary" min="0" , max="' + controlData.maxBrightness + '" />' +
+            '<p id="' + controlId + 'Text" class="form-text">N/A</p>' +
+            '</div>' +
+            '</div>'
+        );
+        valueInput = $('#' + controlId + 'Value');
+        textOutput = $('#' + controlId + 'Text');
+    }
+    valueInput.val(controlData.value);
+    textOutput.text(controlData.value);
+    valueInput.on('input change', function () {
+        var data = {};
+        data[controlId] = this.value;
+        setValues(data);
     });
 }
 
 function setValues(data) {
-    if (setValuesRequest !== undefined) {
+    if (setControlValuesRequest !== undefined) {
         return;
     }
 
-    setValuesRequest = $.post('http://' + host + '/set', data, function (response) {
+    setControlValuesRequest = $.post('http://' + host + '/set', data, function (response) {
         updateGui(response);
-        setValuesRequest = undefined;
+        setControlValuesRequest = undefined;
     });
 }
 
 function updateGui(data) {
-    if (data.led1 !== undefined) {
-        $('#led1Value').val(data.led1);
-        $('#led1Text').text(data.led1);
-    }
-    if (data.led2 !== undefined) {
-        $('#led2Value').val(data.led2);
-        $('#led2Text').text(data.led2);
-    }
-    if (data.button1 !== undefined) {
-        if (data.button1) {
-            $('#button1').addClass("active");
-        } else {
-            $('#button1').removeClass("active");
+    $.each(data, function (controlId, controlData) {
+        switch (controlData.type) {
+            case "button":
+                if (controlData.value) {
+                    $('#' + controlId + 'Value').addClass("active");
+                } else {
+                    $('#' + controlId + 'Value').removeClass("active");
+                }
+            case "led":
+                $('#' + controlId + 'Value').val(controlData.value);
+                $('#' + controlId + 'Text').text(controlData.value);
         }
-    }
+    });
 }
