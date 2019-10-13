@@ -9,13 +9,13 @@ class IoT_Button : public IoT_Control {
     unsigned int debounceDelay;
 
     unsigned long lastDebounceTime;
-    unsigned int oldValue;
+    int oldValue;
 
     std::function<void()> onPress;
     std::function<void(bool)> onChange;
 
   public:
-    IoT_Button(const String id, const String name, const unsigned int pin)
+    IoT_Button(const String id, const String name, const int pin)
         : IoT_Control(id, name, pin, 0)
         , pressedState(LOW)
         , debounceDelay(50)
@@ -48,10 +48,16 @@ class IoT_Button : public IoT_Control {
     }
 
     virtual void setup() {
+        if (pin == -1) {
+            return;
+        }
         pinMode(pin, INPUT);
     }
 
     virtual const int loop() {
+        if (pin == -1) {
+            return IOT_STATUS_UNCHANGED;
+        }
         bool measured = (digitalRead(pin) == pressedState);
 
         if (measured != oldValue) {
@@ -85,7 +91,7 @@ class IoT_Button : public IoT_Control {
         return "button";
     }
 
-    virtual const unsigned int setValue(const unsigned int value) {
+    virtual const int setValue(const int value) {
         if (value) {
             if (onPress) {
                 onPress();

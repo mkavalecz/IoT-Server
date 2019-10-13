@@ -6,6 +6,7 @@
 #endif
 
 #define IoT_Control_LED "CONTROL_LED"
+#define IoT_Not_Connected -1
 
 #include <map>
 #include <FS.h>
@@ -24,12 +25,16 @@ class IoT_Server {
     std::map<const String, IoT_Control*> controlMap;
     bool setupComplete;
     size_t bufferSize;
+    String title;
 
   public:
     IoT_Server(const std::initializer_list<IoT_Control*> controls)
-        : IoT_Server(115200, controls) {
+        : IoT_Server(115200, "IoT-Server", controls) {
     }
-    IoT_Server(unsigned long baudRate, const std::initializer_list<IoT_Control*> controls);
+    IoT_Server(const String title, const std::initializer_list<IoT_Control*> controls)
+        : IoT_Server(115200, title, controls) {
+    }
+    IoT_Server(unsigned long baudRate, const String title, const std::initializer_list<IoT_Control*> controls);
 
     void setup(const char* ssid, const char* password);
     void loop();
@@ -63,6 +68,7 @@ class IoT_Server {
     const String getMethodName(const HTTPMethod method);
     void sendOptionsHeaders();
 
+    void getTitle();
     void getControls();
     void setControls();
 };

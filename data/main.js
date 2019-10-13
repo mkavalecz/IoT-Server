@@ -16,16 +16,31 @@ var ledTemplate = '<div class="form-row">' +
     '</div>' +
     '</div>';
 
+var sliderTemplate = '<div class="form-row">' +
+    '<div class="col form-group text-center">' +
+    '<label for="#id#Value" class="font-weight-bold">#name#</label>' +
+    '<input id="#id#Value" type="range" class="form-control bg-secondary" min="#minValue#" , max="#maxValue#" />' +
+    '<p id="#id#Text" class="form-text">N/A</p>' +
+    '</div>' +
+    '</div>';
+
 var containerSelector = '#containerForm';
 
 var IoT_Control_LED = "CONTROL_LED";
 var setControlValuesRequest;
 
 function onLoad() {
+    getTitle();
     getValues();
 
     new WebSocket('ws://' + host + ':8080').addEventListener('message', function (event) {
         updateGui(JSON.parse(event.data));
+    });
+}
+
+function getTitle() {
+    $.get('http://' + host + '/title', function (response) {
+        setTitle(response.title);
     });
 }
 
@@ -40,11 +55,21 @@ function initGui(data) {
         switch (controlData.type) {
             case "button":
                 initButton(controlId, controlData);
+                break;
             case "led":
                 initLED(controlId, controlData);
+                break;
+            case "slider":
+                initSlider(controlId, controlData);
+                break;
         }
     });
     $('#loading').remove();
+}
+
+function setTitle(title) {
+    window.document.title = title;
+    $('#title').html(title);
 }
 
 function initButton(controlId, controlData) {
@@ -89,6 +114,28 @@ function initLED(controlId, controlData) {
     });
 }
 
+function initSlider(controlId, controlData) {
+    var valueInput = $('#' + controlId + 'Value');
+    var textOutput = $('#' + controlId + 'Text');
+    if (!valueInput.length && !textOutput.length) {
+        $(containerSelector).append(sliderTemplate
+            .replace(new RegExp("#id#", 'g'), controlId)
+            .replace(new RegExp("#name#", 'g'), controlData.name)
+            .replace(new RegExp("#minValue#", 'g'), controlData.minValue)
+            .replace(new RegExp("#maxValue#", 'g'), controlData.maxValue)
+        );
+        valueInput = $('#' + controlId + 'Value');
+        textOutput = $('#' + controlId + 'Text');
+    }
+    valueInput.val(controlData.value);
+    textOutput.text(controlData.value);
+    valueInput.on('input change', function () {
+        var data = {};
+        data[controlId] = this.value;
+        setValues(data);
+    });
+}
+
 function setValues(data) {
     if (setControlValuesRequest !== undefined) {
         return;
@@ -109,9 +156,12 @@ function updateGui(data) {
                 } else {
                     $('#' + controlId + 'Value').removeClass("active");
                 }
+                break;
             case "led":
+            case "slider":
                 $('#' + controlId + 'Value').val(controlData.value);
                 $('#' + controlId + 'Text').text(controlData.value);
+                break;
         }
     });
 }

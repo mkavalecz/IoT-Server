@@ -7,11 +7,11 @@ class IoT_Control {
   protected:
     const String id;
     const String name;
-    const unsigned int pin;
-    unsigned int value;
+    const int pin;
+    int value;
 
   public:
-    IoT_Control(const String id, const String name, const unsigned int pin, const unsigned int value)
+    IoT_Control(const String id, const String name, const int pin, const int value)
         : id(id)
         , name(name)
         , pin(pin)
@@ -36,7 +36,7 @@ class IoT_Control {
         return name;
     }
 
-    virtual const unsigned int setValue(unsigned int value) {
+    virtual const int setValue(int value) {
         this->value = value;
 
 #ifdef IoT_TRACE
@@ -46,7 +46,7 @@ class IoT_Control {
         return value;
     }
 
-    virtual const unsigned int getValue() const {
+    virtual const int getValue() const {
         return value;
     }
 

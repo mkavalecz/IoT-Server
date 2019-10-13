@@ -1,10 +1,11 @@
 #include "IoT_Server.h"
 
-IoT_Server::IoT_Server(unsigned long baudRate, const std::initializer_list<IoT_Control*> controls)
+IoT_Server::IoT_Server(unsigned long baudRate, const String title, const std::initializer_list<IoT_Control*> controls)
     : webServer(80)
     , webSocket(8080)
     , controls(controls)
     , setupComplete(false)
+    , title(title)
     , bufferSize(JSON_OBJECT_SIZE(controls.size()) + (controls.size() * JSON_OBJECT_SIZE(10)) + 100) {
 
     Serial.begin(baudRate);
@@ -24,6 +25,8 @@ IoT_Server::IoT_Server(unsigned long baudRate, const std::initializer_list<IoT_C
     webServer.on("/get", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
     webServer.on("/set", HTTP_POST, [&]() { setControls(); });
     webServer.on("/set", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
+    webServer.on("/title", HTTP_GET, [&]() { getTitle(); });
+    webServer.on("/title", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
 }
 
 void IoT_Server::setup(const char* ssid, const char* password) {
@@ -251,6 +254,12 @@ void IoT_Server::sendOptionsHeaders() {
     webServer.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
     webServer.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     webServer.send(200, "text/plain");
+}
+
+void IoT_Server::getTitle() {
+    DynamicJsonDocument response(bufferSize);
+    response["title"] = title;
+    sendResponse(response);
 }
 
 void IoT_Server::getControls() {
