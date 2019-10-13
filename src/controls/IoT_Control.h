@@ -22,12 +22,10 @@ class IoT_Control {
     virtual const int loop() = 0;
     virtual const String getTypeName() const = 0;
 
-    virtual JsonObject& serializeJsonTo(JsonObject& object) const {
-        JsonObject& obj = object.createNestedObject(getId());
-        obj["name"] = getName();
-        obj["type"] = getTypeName();
-        obj["value"] = getValue();
-        return obj;
+    virtual void serializeJsonTo(DynamicJsonDocument& object) const {
+        object[getId()]["name"] = getName();
+        object[getId()]["type"] = getTypeName();
+        object[getId()]["value"] = getValue();
     }
 
     virtual const String getId() const {

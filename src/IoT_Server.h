@@ -36,8 +36,8 @@ class IoT_Server {
 
     void handleRequest(const String& uri, const HTTPMethod method, const std::function<void(void)> callback);
 
-    void sendNotification(const JsonObject& response);
-    void sendResponse(const JsonObject& response);
+    void sendNotification(const DynamicJsonDocument& response);
+    void sendResponse(const DynamicJsonDocument& response);
 
     const String getParameter(const String id);
 
@@ -48,7 +48,7 @@ class IoT_Server {
 
   private:
     void debugLine(const String text);
-    const String getJsonString(const JsonObject& response);
+    const String getJsonString(const DynamicJsonDocument& response);
 
     IoT_LED* findControlLED();
     void enableControlLED();

@@ -45,12 +45,10 @@ void IoT_Server::setup(const char* ssid, const char* password) {
 }
 
 void IoT_Server::loop() {
-    DynamicJsonBuffer buffer(bufferSize);
     for (IoT_Control* control : controls) {
         int status = control->loop();
         if (status != IOT_STATUS_UNCHANGED) {
-            JsonObject& notification = buffer.createObject();
-            control->serializeJsonTo(notification);
+            DynamicJsonDocument notification(bufferSize);
             sendNotification(notification);
         }
     }
@@ -66,13 +64,13 @@ void IoT_Server::handleRequest(const String& uri, const HTTPMethod method, const
     }
 }
 
-void IoT_Server::sendNotification(const JsonObject& response) {
-    String notification = getJsonString(response);
-    debugLine("Notification: " + notification);
-    webSocket.broadcastTXT(notification);
+void IoT_Server::sendNotification(const DynamicJsonDocument& notification) {
+    String notificationString = getJsonString(notification);
+    debugLine("Notification: " + notificationString);
+    webSocket.broadcastTXT(notificationString);
 }
 
-void IoT_Server::sendResponse(const JsonObject& response) {
+void IoT_Server::sendResponse(const DynamicJsonDocument& response) {
     String responseString = getJsonString(response);
     debugLine("Response: " + responseString);
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
@@ -100,8 +98,7 @@ const int IoT_Server::setValue(const String id, const int value) {
 
     int result = it->second->setValue(value);
 
-    DynamicJsonBuffer buffer(bufferSize);
-    JsonObject& notification = buffer.createObject();
+    DynamicJsonDocument notification(bufferSize);
     it->second->serializeJsonTo(notification);
     sendNotification(notification);
 
@@ -123,16 +120,16 @@ void IoT_Server::debugLine(const String text) {
 #endif
 }
 
-const String IoT_Server::getJsonString(const JsonObject& response) {
-    String responseString = String();
-    response.printTo(responseString);
+const String IoT_Server::getJsonString(const DynamicJsonDocument& json) {
+    String jsonString = String();
+    serializeJson(json, jsonString);
 
 #ifdef IoT_DEBUG
     response.printTo(Serial);
     Serial.println("");
 #endif
 
-    return responseString;
+    return jsonString;
 }
 
 IoT_LED* IoT_Server::findControlLED() {
@@ -257,8 +254,7 @@ void IoT_Server::sendOptionsHeaders() {
 }
 
 void IoT_Server::getControls() {
-    DynamicJsonBuffer buffer(bufferSize);
-    JsonObject& response = buffer.createObject();
+    DynamicJsonDocument response(bufferSize);
     for (IoT_Control* control : controls) {
         control->serializeJsonTo(response);
     }
@@ -266,8 +262,7 @@ void IoT_Server::getControls() {
 }
 
 void IoT_Server::setControls() {
-    DynamicJsonBuffer buffer(bufferSize);
-    JsonObject& response = buffer.createObject();
+    DynamicJsonDocument response(bufferSize);
     for (IoT_Control* control : controls) {
         if (webServer.hasArg(control->getId())) {
             control->setValue(webServer.arg(control->getId()).toInt());

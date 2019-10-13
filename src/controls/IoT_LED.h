@@ -41,10 +41,9 @@ class IoT_LED : public IoT_Control {
         return "led";
     }
 
-    virtual JsonObject& serializeJsonTo(JsonObject& object) const {
-        JsonObject& obj = IoT_Control::serializeJsonTo(object);
-        obj["maxBrightness"] = maxBrightness;
-        return obj;
+    virtual void serializeJsonTo(DynamicJsonDocument& object) const {
+        IoT_Control::serializeJsonTo(object);
+        object[getId()]["maxBrightness"] = maxBrightness;
     }
 
     virtual const unsigned int setValue(const unsigned int value) {
