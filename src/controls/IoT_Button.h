@@ -16,7 +16,11 @@ class IoT_Button : public IoT_Control {
 
   public:
     IoT_Button(const String id, const String name, const int pin)
-        : IoT_Control(id, name, pin, 0)
+        : IoT_Button(id, name, pin, false) {
+    }
+
+    IoT_Button(const String id, const String name, const int pin, const bool showOnSettings)
+        : IoT_Control(id, name, pin, showOnSettings, 0)
         , pressedState(LOW)
         , debounceDelay(50)
         , lastDebounceTime(0)
@@ -48,14 +52,14 @@ class IoT_Button : public IoT_Control {
     }
 
     virtual void setup() {
-        if (pin == -1) {
+        if (pin == IOT_NOT_CONNECTED) {
             return;
         }
         pinMode(pin, INPUT);
     }
 
     virtual const int loop() {
-        if (pin == -1) {
+        if (pin == IOT_NOT_CONNECTED) {
             return IOT_STATUS_UNCHANGED;
         }
         bool measured = (digitalRead(pin) == pressedState);

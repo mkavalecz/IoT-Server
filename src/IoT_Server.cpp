@@ -1,11 +1,14 @@
 #include "IoT_Server.h"
 
-IoT_Server::IoT_Server(unsigned long baudRate, const String title, const std::initializer_list<IoT_Control*> controls)
+IoT_Server::IoT_Server(unsigned long baudRate, const String userName, const String password, const String title,
+    const std::initializer_list<IoT_Control*> controls)
     : webServer(80)
     , webSocket(8080)
     , controls(controls)
-    , setupComplete(false)
+    , userName(userName)
+    , password(password)
     , title(title)
+    , setupComplete(false)
     , bufferSize(JSON_OBJECT_SIZE(controls.size()) + (controls.size() * JSON_OBJECT_SIZE(10)) + 100) {
 
     Serial.begin(baudRate);
@@ -29,7 +32,7 @@ IoT_Server::IoT_Server(unsigned long baudRate, const String title, const std::in
     webServer.on("/title", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
 }
 
-void IoT_Server::setup(const char* ssid, const char* password) {
+void IoT_Server::setup(String ssid1, String password1, String ssid2, String password2) {
     debugLine("Initializing controls:");
     for (IoT_Control* control : controls) {
         control->setup();
@@ -37,7 +40,11 @@ void IoT_Server::setup(const char* ssid, const char* password) {
     }
 
     enableControlLED();
-    setupWifi(ssid, password);
+    if (ssid2 != "" && password2 != "") {
+        setupWifi(ssid1, password1, ssid2, password2);
+    } else {
+        setupWifi(ssid1, password1);
+    }
     debugLine("Starting web server.");
     webServer.begin();
     debugLine("Starting web socket.");
@@ -65,6 +72,14 @@ void IoT_Server::handleRequest(const String& uri, const HTTPMethod method, const
     if (method != HTTP_OPTIONS) {
         webServer.on(uri, HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
     }
+}
+
+bool IoT_Server::checkAuthentication() {
+    if (!webServer.authenticate(userName.c_str(), password.c_str())) {
+        webServer.requestAuthentication();
+        return false;
+    }
+    return true;
 }
 
 void IoT_Server::sendNotification(const DynamicJsonDocument& notification) {
@@ -135,10 +150,10 @@ const String IoT_Server::getJsonString(const DynamicJsonDocument& json) {
     return jsonString;
 }
 
-IoT_LED* IoT_Server::findControlLED() {
-    std::map<String, IoT_Control*>::iterator it = controlMap.find(IoT_Control_LED);
+IoT_Slider* IoT_Server::findControlLED() {
+    std::map<String, IoT_Control*>::iterator it = controlMap.find(IOT_CONTROL_LED);
     if (it != controlMap.end()) {
-        return (IoT_LED*) it->second;
+        return (IoT_Slider*) it->second;
     }
     return NULL;
 }
@@ -170,11 +185,47 @@ void IoT_Server::blinkControlLED() {
     }
 }
 
-void IoT_Server::setupWifi(const char* ssid, const char* password) {
+void IoT_Server::setupWifi(String ssid, String password) {
     Serial.print("Connecting to ");
     Serial.print(ssid);
-    WiFi.begin(ssid, password);
+    WiFi.begin(ssid.c_str(), password.c_str());
     while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+        blinkControlLED();
+    }
+    enableControlLED();
+    Serial.println("");
+    Serial.println("WiFi connected.");
+}
+
+void IoT_Server::setupWifi(String ssid1, String password1, String ssid2, String password2) {
+    Serial.print("Waiting for one of the configured networks to show up");
+    bool found = false;
+    while (true) {
+        if (!found) {
+            int n = WiFi.scanNetworks();
+            for (int i = 0; i < n; ++i) {
+                if (WiFi.SSID(i) == ssid1) {
+                    WiFi.begin(ssid1.c_str(), password1.c_str());
+                    Serial.println("");
+                    Serial.print("Connecting to ");
+                    Serial.print(ssid1);
+                    found = true;
+                    break;
+                }
+                if (WiFi.SSID(i) == ssid2) {
+                    WiFi.begin(ssid2.c_str(), password2.c_str());
+                    Serial.print("Connecting to ");
+                    Serial.print(ssid2);
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (WiFi.status() == WL_CONNECTED) {
+            break;
+        }
         delay(500);
         Serial.print(".");
         blinkControlLED();
@@ -192,9 +243,12 @@ void IoT_Server::printUrl() {
 }
 
 void IoT_Server::handleFiles() {
+    if (!checkAuthentication()) {
+        return;
+    }
     String path = webServer.uri();
-    if (path.endsWith("/")) {
-        path += "index.html";
+    if (path == "/") {
+        path = "/index.html";
     }
 
     if (!SPIFFS.exists(path)) {
@@ -257,12 +311,18 @@ void IoT_Server::sendOptionsHeaders() {
 }
 
 void IoT_Server::getTitle() {
+    if (!checkAuthentication()) {
+        return;
+    }
     DynamicJsonDocument response(bufferSize);
     response["title"] = title;
     sendResponse(response);
 }
 
 void IoT_Server::getControls() {
+    if (!checkAuthentication()) {
+        return;
+    }
     DynamicJsonDocument response(bufferSize);
     for (IoT_Control* control : controls) {
         control->serializeJsonTo(response);
@@ -271,6 +331,9 @@ void IoT_Server::getControls() {
 }
 
 void IoT_Server::setControls() {
+    if (!checkAuthentication()) {
+        return;
+    }
     DynamicJsonDocument response(bufferSize);
     for (IoT_Control* control : controls) {
         if (webServer.hasArg(control->getId())) {

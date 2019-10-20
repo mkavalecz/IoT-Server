@@ -1,6 +1,9 @@
 #ifndef IOT_CONTROL_H
 #define IOT_CONTROL_H
 
+#include "Arduino.h"
+
+#define IOT_NOT_CONNECTED -1
 #define IOT_STATUS_UNCHANGED -1
 
 class IoT_Control {
@@ -8,13 +11,15 @@ class IoT_Control {
     const String id;
     const String name;
     const int pin;
+    const bool showOnSettings;
     int value;
 
   public:
-    IoT_Control(const String id, const String name, const int pin, const int value)
+    IoT_Control(const String id, const String name, const int pin, const bool showOnSettings, const int value)
         : id(id)
         , name(name)
         , pin(pin)
+        , showOnSettings(showOnSettings)
         , value(value) {
     }
 
@@ -26,6 +31,7 @@ class IoT_Control {
         object[getId()]["name"] = getName();
         object[getId()]["type"] = getTypeName();
         object[getId()]["value"] = getValue();
+        object[getId()]["showOnSettings"] = getShowOnSettings();
     }
 
     virtual const String getId() const {
@@ -34,6 +40,10 @@ class IoT_Control {
 
     virtual const String getName() const {
         return name;
+    }
+
+    virtual const bool getShowOnSettings() const {
+        return showOnSettings;
     }
 
     virtual const int setValue(int value) {

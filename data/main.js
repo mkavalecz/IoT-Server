@@ -1,30 +1,41 @@
 var host = (window.location.protocol !== 'file:') ? window.location.host : "wemos"; // change "wemos" to your ip/domain for debugging
 
-var buttonTemplate = '<div class="form-row">' +
-    '<div class="col form-group text-center">' +
+var buttonTemplate = '<div class="form-group">' +
+    '<div class="row text-center">' +
+    '<div class="col form-group">' +
     '<label for="#id#Value" class="font-weight-bold">#name#</label>' +
     '<div class="w-100"></div>' +
-    '<button id="#id#Value" type="button" class="btn"></button>' +
+    '<button id="#id#Value" type="button" class="btn big-btn"></button>' +
+    '</div>' +
     '</div>' +
     '</div>';
 
-var ledTemplate = '<div class="form-row">' +
-    '<div class="col form-group text-center">' +
+var checkboxTemplate = '<div class="form-group">' +
+    '<div class="row text-center">' +
+    '<div class="col form-group">' +
     '<label for="#id#Value" class="font-weight-bold">#name#</label>' +
-    '<input id="#id#Value" type="range" class="form-control bg-secondary" min="0" , max="#maxBrightness#" />' +
-    '<p id="#id#Text" class="form-text">N/A</p>' +
+    '<div class="w-100"></div>' +
+    '<input id="#id#Value" type="checkbox" />' +
+    '</div>' +
     '</div>' +
     '</div>';
 
-var sliderTemplate = '<div class="form-row">' +
-    '<div class="col form-group text-center">' +
-    '<label for="#id#Value" class="font-weight-bold">#name#</label>' +
-    '<input id="#id#Value" type="range" class="form-control bg-secondary" min="#minValue#" , max="#maxValue#" />' +
-    '<p id="#id#Text" class="form-text">N/A</p>' +
+var sliderTemplate = '<div class="form-group">' +
+    '<div class="row text-center">' +
+    '<div class="col form-group">' +
+    '<label for="#id#Slider" class="font-weight-bold">#name#</label>' +
+    '<input id="#id#Slider" type="range" class="form-control bg-secondary" min="#minValue#" , max="#maxValue#" />' +
+    '</div>' +
+    '</div>' +
+    '<div class="row justify-content-center">' +
+    '<div class="col-4 form-group">' +
+    '<input id="#id#Text" type="text" class="form-control text-center" />' +
+    '</div>' +
     '</div>' +
     '</div>';
 
-var containerSelector = '#containerForm';
+var controlSelector = '#controls';
+var settingsSelector = '#settings';
 
 var IoT_Control_LED = "CONTROL_LED";
 var setControlValuesRequest;
@@ -56,8 +67,8 @@ function initGui(data) {
             case "button":
                 initButton(controlId, controlData);
                 break;
-            case "led":
-                initLED(controlId, controlData);
+            case "checkbox":
+                initCheckbox(controlId, controlData);
                 break;
             case "slider":
                 initSlider(controlId, controlData);
@@ -75,7 +86,11 @@ function setTitle(title) {
 function initButton(controlId, controlData) {
     var valueInput = $('#' + controlId + 'Value');
     if (!valueInput.length) {
-        $(containerSelector).append(buttonTemplate
+        var selector = controlSelector;
+        if (controlData.showOnSettings) {
+            selector = settingsSelector;
+        }
+        $(selector).append(buttonTemplate
             .replace(new RegExp("#id#", 'g'), controlId)
             .replace(new RegExp("#name#", 'g'), controlData.name)
         );
@@ -89,49 +104,69 @@ function initButton(controlId, controlData) {
     });
 }
 
-function initLED(controlId, controlData) {
-    if (controlId === IoT_Control_LED) {
-        return;
-    }
-
+function initCheckbox(controlId, controlData) {
     var valueInput = $('#' + controlId + 'Value');
-    var textOutput = $('#' + controlId + 'Text');
-    if (!valueInput.length && !textOutput.length) {
-        $(containerSelector).append(ledTemplate
+    if (!valueInput.length) {
+        var selector = controlSelector;
+        if (controlData.showOnSettings) {
+            selector = settingsSelector;
+        }
+        $(selector).append(checkboxTemplate
             .replace(new RegExp("#id#", 'g'), controlId)
             .replace(new RegExp("#name#", 'g'), controlData.name)
-            .replace(new RegExp("#maxBrightness#", 'g'), controlData.maxBrightness)
         );
         valueInput = $('#' + controlId + 'Value');
-        textOutput = $('#' + controlId + 'Text');
     }
-    valueInput.val(controlData.value);
-    textOutput.text(controlData.value);
-    valueInput.on('input change', function () {
+    valueInput.bootstrapToggle({
+        onstyle: 'primary',
+        offstyle: 'secondary',
+        size: 'lg'
+    });
+    valueInput.prop('checked', controlData.value != 0);
+    valueInput.on('change', function () {
         var data = {};
-        data[controlId] = this.value;
+        data[controlId] = valueInput.prop('checked') ? 1 : 0;
         setValues(data);
     });
 }
 
 function initSlider(controlId, controlData) {
-    var valueInput = $('#' + controlId + 'Value');
-    var textOutput = $('#' + controlId + 'Text');
-    if (!valueInput.length && !textOutput.length) {
-        $(containerSelector).append(sliderTemplate
+    if (controlId === IoT_Control_LED) {
+        return;
+    }
+
+    var valueSlider = $('#' + controlId + 'Slider');
+    var valueInput = $('#' + controlId + 'Text');
+    if (!valueSlider.length && !valueInput.length) {
+        var selector = controlSelector;
+        if (controlData.showOnSettings) {
+            selector = settingsSelector;
+        }
+        $(selector).append(sliderTemplate
             .replace(new RegExp("#id#", 'g'), controlId)
             .replace(new RegExp("#name#", 'g'), controlData.name)
             .replace(new RegExp("#minValue#", 'g'), controlData.minValue)
             .replace(new RegExp("#maxValue#", 'g'), controlData.maxValue)
         );
-        valueInput = $('#' + controlId + 'Value');
-        textOutput = $('#' + controlId + 'Text');
+        valueSlider = $('#' + controlId + 'Slider');
+        valueInput = $('#' + controlId + 'Text');
     }
+    valueSlider.val(controlData.value);
     valueInput.val(controlData.value);
-    textOutput.text(controlData.value);
-    valueInput.on('input change', function () {
+    valueSlider.on('input change', function () {
         var data = {};
         data[controlId] = this.value;
+        setValues(data);
+    });
+    valueInput.on('change', function () {
+        var num = parseInt(valueInput.val());
+        if (num === NaN || num < controlData.minValue) {
+            num = controlData.minValue;
+        } else if (num > controlData.maxValue) {
+            num = controlData.maxValue;
+        }
+        var data = {};
+        data[controlId] = num;
         setValues(data);
     });
 }
@@ -157,10 +192,9 @@ function updateGui(data) {
                     $('#' + controlId + 'Value').removeClass("active");
                 }
                 break;
-            case "led":
             case "slider":
-                $('#' + controlId + 'Value').val(controlData.value);
-                $('#' + controlId + 'Text').text(controlData.value);
+                $('#' + controlId + 'Slider').val(controlData.value);
+                $('#' + controlId + 'Text').val(controlData.value);
                 break;
         }
     });

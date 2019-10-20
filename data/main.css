@@ -23,12 +23,12 @@ input[type=range]::-moz-range-thumb {
     cursor: pointer;
 }
 
-.btn {
+.big-btn {
     width: 50px;
     height: 50px;
     background: red;
 }
 
-.active,.btn:active {
+.big-btn:active {
     background: green;
 }
