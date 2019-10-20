@@ -118,8 +118,8 @@ function initCheckbox(controlId, controlData) {
         valueInput = $('#' + controlId + 'Value');
     }
     valueInput.bootstrapToggle({
-        onstyle: 'primary',
-        offstyle: 'secondary',
+        onstyle: 'success',
+        offstyle: 'danger',
         size: 'lg'
     });
     valueInput.prop('checked', controlData.value != 0).change();
