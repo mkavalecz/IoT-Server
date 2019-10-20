@@ -1,6 +1,4 @@
-#ifndef EXAMPLE
-
-#define PUMPKIN
+//#define PUMPKIN
 #ifdef PUMPKIN
 
 #include "IoT_Server.h"
@@ -61,5 +59,4 @@ void loop() {
     }
 }
 
-#endif
 #endif
