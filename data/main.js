@@ -122,7 +122,7 @@ function initCheckbox(controlId, controlData) {
         offstyle: 'secondary',
         size: 'lg'
     });
-    valueInput.prop('checked', controlData.value != 0);
+    valueInput.prop('checked', controlData.value != 0).change();
     valueInput.on('change', function () {
         var data = {};
         data[controlId] = valueInput.prop('checked') ? 1 : 0;
