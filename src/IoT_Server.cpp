@@ -295,9 +295,11 @@ void IoT_Server::handleFiles() {
     if (!checkAuthentication()) {
         return;
     }
-    String path = webServer.uri();
-    if (path == "/") {
-        path = "/index.html";
+    String path;
+    if (webServer.uri() == "/") {
+        path = "/static/index.html";
+    } else {
+        path = "/static" + webServer.uri();
     }
 
     if (!SPIFFS.exists(path)) {

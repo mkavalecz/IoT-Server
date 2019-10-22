@@ -12,11 +12,11 @@
 #endif
 
 #ifndef IOT_WIFI_CONFIG
-#define IOT_WIFI_CONFIG "/wifi.conf"
+#define IOT_WIFI_CONFIG "/config/wifi.conf"
 #endif
 
 #ifndef IOT_AUTH_CONFIG
-#define IOT_AUTH_CONFIG "/auth.conf"
+#define IOT_AUTH_CONFIG "/config/auth.conf"
 #endif
 
 #ifndef IOT_TITLE
