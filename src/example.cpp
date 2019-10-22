@@ -1,6 +1,8 @@
 #define EXAMPLE
 #ifdef EXAMPLE
 
+#define IOT_TITLE "IoT-Server"
+
 #include "Arduino.h"
 #include "IoT_Server.h"
 #include "controls/IoT_Slider.h"
@@ -12,15 +14,14 @@ void increaseLED1();
 
 bool autoIncrement = false;
 
-IoT_Server server("admin", "admin", "IoT LED Pumpkin",
-    {new IoT_Slider(IOT_CONTROL_LED, "Control LED", D4, true, 1023), new IoT_Slider("led1", "LED 1", D1),
-        new IoT_Slider("led2", "LED 2", D2), (new IoT_Button("button1", "Button 1", D3))->setOnPress(button1Pressed),
-        (new IoT_Checkbox("autoIncrement", "Autoincrement LED 1", 0))->setOnChange([&](const bool value) {
-            autoIncrement = value;
-        })});
+IoT_Server server({new IoT_Slider(IOT_CONTROL_LED, "Control LED", D4, true, 1023), new IoT_Slider("led1", "LED 1", D1),
+    new IoT_Slider("led2", "LED 2", D2), (new IoT_Button("button1", "Button 1", D3))->setOnPress(button1Pressed),
+    (new IoT_Checkbox("autoIncrement", "Autoincrement LED 1", 0))->setOnChange([&](const bool value) {
+        autoIncrement = value;
+    })});
 
 void setup() {
-    server.setup("IoT_Wifi", "107_53cur3p455w0rd");
+    server.setup();
 }
 
 void loop() {

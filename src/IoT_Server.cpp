@@ -1,55 +1,32 @@
 #include "IoT_Server.h"
 
-IoT_Server::IoT_Server(unsigned long baudRate, const String userName, const String password, const String title,
-    const std::initializer_list<IoT_Control*> controls)
+IoT_Server::IoT_Server(const std::initializer_list<IoT_Control*> controls)
     : webServer(80)
     , webSocket(8080)
     , controls(controls)
-    , userName(userName)
-    , password(password)
-    , title(title)
     , setupComplete(false)
     , bufferSize(JSON_OBJECT_SIZE(controls.size()) + (controls.size() * JSON_OBJECT_SIZE(10)) + 100) {
-
-    Serial.begin(baudRate);
 
     for (IoT_Control* control : controls) {
         controlMap[control->getId()] = control;
     }
 
     controlLED = findControlLED();
-
-    debugLine("Starting filesystem...");
-    SPIFFS.begin();
-
-    debugLine("Web server basic setup...");
-    webServer.onNotFound([&]() { handleFiles(); });
-    webServer.on("/get", HTTP_GET, [&]() { getControls(); });
-    webServer.on("/get", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
-    webServer.on("/set", HTTP_POST, [&]() { setControls(); });
-    webServer.on("/set", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
-    webServer.on("/title", HTTP_GET, [&]() { getTitle(); });
-    webServer.on("/title", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
 }
 
-void IoT_Server::setup(String ssid1, String password1, String ssid2, String password2) {
-    debugLine("Initializing controls:");
-    for (IoT_Control* control : controls) {
-        control->setup();
-        debugLine(control->getId() + " (" + control->getName() + ")");
-    }
+void IoT_Server::setup() {
+    Serial.begin(IOT_BAUD_RATE);
+    SPIFFS.begin();
 
     enableControlLED();
-    if (ssid2 != "" && password2 != "") {
-        setupWifi(ssid1, password1, ssid2, password2);
-    } else {
-        setupWifi(ssid1, password1);
-    }
-    debugLine("Starting web server.");
-    webServer.begin();
-    debugLine("Starting web socket.");
-    webSocket.begin();
+
+    setupControls();
+    setupWifi();
+    setupAuthentication();
+    setupWebServer();
+    setupWebSocket();
     printUrl();
+
     disableControlLED();
     setupComplete = true;
 }
@@ -66,8 +43,12 @@ void IoT_Server::loop() {
     webServer.handleClient();
 }
 
-void IoT_Server::handleRequest(const String& uri, const HTTPMethod method, const std::function<void(void)> callback) {
-    debugLine("Handling request: " + uri + ", " + getMethodName(method));
+void IoT_Server::handleRequest(const char* uri, const HTTPMethod method, const std::function<void(void)> callback) {
+    debug("Handling request: ");
+    debug(uri);
+    debug(", ");
+    debugLine(getMethodName(method));
+
     webServer.on(uri, method, callback);
     if (method != HTTP_OPTIONS) {
         webServer.on(uri, HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
@@ -84,23 +65,25 @@ bool IoT_Server::checkAuthentication() {
 
 void IoT_Server::sendNotification(const DynamicJsonDocument& notification) {
     String notificationString = getJsonString(notification);
-    debugLine("Notification: " + notificationString);
+    debug("Notification: ");
+    debugLine(notificationString.c_str());
     webSocket.broadcastTXT(notificationString);
 }
 
 void IoT_Server::sendResponse(const DynamicJsonDocument& response) {
     String responseString = getJsonString(response);
-    debugLine("Response: " + responseString);
+    debug("Response: ");
+    debugLine(responseString.c_str());
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     webServer.send(200, "application/json", responseString);
 }
 
-const String IoT_Server::getParameter(const String id) {
-    return webServer.arg(id);
+const char* IoT_Server::getParameter(const char* id) {
+    return webServer.arg(id).c_str();
 }
 
-const int IoT_Server::getValue(const String id) {
-    std::map<String, IoT_Control*>::iterator it = controlMap.find(id);
+const int IoT_Server::getValue(const char* id) {
+    std::map<const char*, IoT_Control*>::iterator it = controlMap.find(id);
     if (it == controlMap.end()) {
         return 0;
     }
@@ -108,8 +91,8 @@ const int IoT_Server::getValue(const String id) {
     return it->second->getValue();
 }
 
-const int IoT_Server::setValue(const String id, const int value) {
-    std::map<String, IoT_Control*>::iterator it = controlMap.find(id);
+const int IoT_Server::setValue(const char* id, const int value) {
+    std::map<const char*, IoT_Control*>::iterator it = controlMap.find(id);
     if (it == controlMap.end()) {
         return 0;
     }
@@ -132,9 +115,15 @@ IoT_Server::~IoT_Server() {
     controlLED = NULL;
 }
 
-void IoT_Server::debugLine(const String text) {
+void IoT_Server::debug(const char* text) {
 #ifdef IoT_DEBUG
-    Serial.println(text);
+    Serial.print(text);
+#endif
+}
+
+void IoT_Server::debugLine(const char* text) {
+#ifdef IoT_DEBUG
+    Serial.print(text);
 #endif
 }
 
@@ -151,7 +140,7 @@ const String IoT_Server::getJsonString(const DynamicJsonDocument& json) {
 }
 
 IoT_Slider* IoT_Server::findControlLED() {
-    std::map<String, IoT_Control*>::iterator it = controlMap.find(IOT_CONTROL_LED);
+    std::map<const char*, IoT_Control*>::iterator it = controlMap.find(IOT_CONTROL_LED);
     if (it != controlMap.end()) {
         return (IoT_Slider*) it->second;
     }
@@ -185,41 +174,59 @@ void IoT_Server::blinkControlLED() {
     }
 }
 
-void IoT_Server::setupWifi(String ssid, String password) {
-    Serial.print("Connecting to ");
-    Serial.print(ssid);
-    WiFi.begin(ssid.c_str(), password.c_str());
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-        blinkControlLED();
+void IoT_Server::setupControls() {
+    debugLine("Initializing controls:");
+    for (IoT_Control* control : controls) {
+        control->setup();
+
+        debug(control->getId());
+        debug(" (");
+        debug(control->getName());
+        debugLine(")");
     }
-    enableControlLED();
-    Serial.println("");
-    Serial.println("WiFi connected.");
 }
 
-void IoT_Server::setupWifi(String ssid1, String password1, String ssid2, String password2) {
-    Serial.print("Waiting for one of the configured networks to show up");
+void IoT_Server::setupWifi() {
+    if (!SPIFFS.exists(IOT_WIFI_CONFIG)) {
+        Serial.print("WiFi config not found on file system. Please upload ");
+        Serial.print(IOT_WIFI_CONFIG);
+        Serial.println(" from data folder.");
+    }
+    String ssid[IOT_NUM_SSID];
+    String password[IOT_NUM_SSID];
+
+    Serial.println("Reading wifi config from file.");
+    File file = SPIFFS.open(IOT_WIFI_CONFIG, "r");
+    for (int i = 0; i < IOT_NUM_SSID; i++) {
+        ssid[i] = file.readStringUntil(';');
+        password[i] = file.readStringUntil(';');
+
+        Serial.print("SSID ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(ssid[i]);
+    }
+    file.close();
+    Serial.println("End of wifi config.");
+
+    Serial.print("Waiting for one of the configured networks to show up.");
     bool found = false;
     while (true) {
         if (!found) {
             int n = WiFi.scanNetworks();
-            for (int i = 0; i < n; ++i) {
-                if (WiFi.SSID(i) == ssid1) {
-                    WiFi.begin(ssid1.c_str(), password1.c_str());
-                    Serial.println("");
-                    Serial.print("Connecting to ");
-                    Serial.print(ssid1);
-                    found = true;
-                    break;
-                }
-                if (WiFi.SSID(i) == ssid2) {
-                    WiFi.begin(ssid2.c_str(), password2.c_str());
-                    Serial.print("Connecting to ");
-                    Serial.print(ssid2);
-                    found = true;
-                    break;
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < IOT_NUM_SSID; j++) {
+                    if (ssid[j] == "") {
+                        continue;
+                    }
+                    if (WiFi.SSID(i) == ssid[j]) {
+                        WiFi.begin(ssid[j].c_str(), password[j].c_str());
+                        Serial.println("");
+                        Serial.print("Connecting to ");
+                        Serial.print(ssid[j]);
+                        found = true;
+                        break;
+                    }
                 }
             }
         }
@@ -235,7 +242,49 @@ void IoT_Server::setupWifi(String ssid1, String password1, String ssid2, String 
     Serial.println("WiFi connected.");
 }
 
+void IoT_Server::setupAuthentication() {
+    if (!SPIFFS.exists(IOT_AUTH_CONFIG)) {
+        Serial.print("Authentication config not found on file system. Please upload ");
+        Serial.print(IOT_AUTH_CONFIG);
+        Serial.println(" from data folder.");
+        Serial.println("Using admin/admin as fallback user/password.");
+        userName = "admin";
+        password = "admin";
+        return;
+    }
+
+    Serial.println("Reading authentication config from file.");
+    File file = SPIFFS.open(IOT_AUTH_CONFIG, "r");
+    userName = file.readStringUntil(';');
+    password = file.readStringUntil(';');
+
+    Serial.print("Username: ");
+    Serial.println(userName);
+
+    file.close();
+    Serial.println("End of authentication config.");
+}
+
+void IoT_Server::setupWebServer() {
+    debugLine("Web server basic setup...");
+    webServer.onNotFound([&]() { handleFiles(); });
+    webServer.on("/get", HTTP_GET, [&]() { getControls(); });
+    webServer.on("/get", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
+    webServer.on("/set", HTTP_POST, [&]() { setControls(); });
+    webServer.on("/set", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
+    webServer.on("/title", HTTP_GET, [&]() { getTitle(); });
+    webServer.on("/title", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
+    debugLine("Starting web server.");
+    webServer.begin();
+}
+
+void IoT_Server::setupWebSocket() {
+    debugLine("Starting web socket.");
+    webSocket.begin();
+}
+
 void IoT_Server::printUrl() {
+    Serial.println("Setup successful.");
     Serial.print("URL: ");
     Serial.print("http://");
     Serial.print(WiFi.localIP());
@@ -261,7 +310,7 @@ void IoT_Server::handleFiles() {
     file.close();
 }
 
-const String IoT_Server::getContentType(const String filename) {
+const char* IoT_Server::getContentType(const String& filename) {
     if (filename.endsWith(".html")) {
         return "text/html";
     } else if (filename.endsWith(".css")) {
@@ -281,7 +330,7 @@ const String IoT_Server::getContentType(const String filename) {
     return "application/octet-stream";
 }
 
-const String IoT_Server::getMethodName(const HTTPMethod method) {
+const char* IoT_Server::getMethodName(const HTTPMethod method) {
     switch (method) {
         case HTTP_ANY:
             return "ANY";
@@ -315,7 +364,7 @@ void IoT_Server::getTitle() {
         return;
     }
     DynamicJsonDocument response(bufferSize);
-    response["title"] = title;
+    response["title"] = IOT_TITLE;
     sendResponse(response);
 }
 

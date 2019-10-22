@@ -8,14 +8,14 @@
 
 class IoT_Control {
   protected:
-    const String id;
-    const String name;
+    const char* id;
+    const char* name;
     const int pin;
     const bool showOnSettings;
     int value;
 
   public:
-    IoT_Control(const String id, const String name, const int pin, const bool showOnSettings, const int value)
+    IoT_Control(const char* id, const char* name, const int pin, const bool showOnSettings, const int value)
         : id(id)
         , name(name)
         , pin(pin)
@@ -25,7 +25,7 @@ class IoT_Control {
 
     virtual void setup() = 0;
     virtual const int loop() = 0;
-    virtual const String getTypeName() const = 0;
+    virtual const char* getTypeName() const = 0;
 
     virtual void serializeJsonTo(DynamicJsonDocument& object) const {
         object[getId()]["name"] = getName();
@@ -34,11 +34,11 @@ class IoT_Control {
         object[getId()]["showOnSettings"] = getShowOnSettings();
     }
 
-    virtual const String getId() const {
+    virtual const char* getId() const {
         return id;
     }
 
-    virtual const String getName() const {
+    virtual const char* getName() const {
         return name;
     }
 

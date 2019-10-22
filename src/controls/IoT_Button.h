@@ -15,11 +15,11 @@ class IoT_Button : public IoT_Control {
     std::function<void(bool)> onChange;
 
   public:
-    IoT_Button(const String id, const String name, const int pin)
+    IoT_Button(const char* id, const char* name, const int pin)
         : IoT_Button(id, name, pin, false) {
     }
 
-    IoT_Button(const String id, const String name, const int pin, const bool showOnSettings)
+    IoT_Button(const char* id, const char* name, const int pin, const bool showOnSettings)
         : IoT_Control(id, name, pin, showOnSettings, 0)
         , pressedState(LOW)
         , debounceDelay(50)
@@ -91,7 +91,7 @@ class IoT_Button : public IoT_Control {
         return IOT_STATUS_UNCHANGED;
     }
 
-    virtual const String getTypeName() const {
+    virtual const char* getTypeName() const {
         return "button";
     }
 

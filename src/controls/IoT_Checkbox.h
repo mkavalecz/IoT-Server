@@ -8,15 +8,15 @@ class IoT_Checkbox : public IoT_Control {
     std::function<void(bool)> onChange;
 
   public:
-    IoT_Checkbox(const String id, const String name, const int initialValue)
+    IoT_Checkbox(const char* id, const char* name, const int initialValue)
         : IoT_Checkbox(id, name, IOT_NOT_CONNECTED, false, initialValue) {
     }
 
-    IoT_Checkbox(const String id, const String name, const int initialValue, const bool showOnSettings)
+    IoT_Checkbox(const char* id, const char* name, const int initialValue, const bool showOnSettings)
         : IoT_Checkbox(id, name, IOT_NOT_CONNECTED, showOnSettings, initialValue) {
     }
 
-    IoT_Checkbox(const String id, const String name, const int pin, const int initialValue, const bool showOnSettings)
+    IoT_Checkbox(const char* id, const char* name, const int pin, const int initialValue, const bool showOnSettings)
         : IoT_Control(id, name, pin, showOnSettings, initialValue) {
     }
 
@@ -47,7 +47,7 @@ class IoT_Checkbox : public IoT_Control {
         return IoT_Control::setValue(value);
     }
 
-    virtual const String getTypeName() const {
+    virtual const char* getTypeName() const {
         return "checkbox";
     }
 

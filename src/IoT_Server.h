@@ -1,11 +1,31 @@
 #ifndef IOT_SERVER_H
 #define IOT_SERVER_H
 
-#ifdef IoT_TRACE
-#define IoT_DEBUG
+#ifdef IOT_TRACE
+#define IOT_DEBUG
 #endif
 
 #define IOT_CONTROL_LED "CONTROL_LED"
+
+#ifndef IOT_NUM_SSID
+#define IOT_NUM_SSID 5
+#endif
+
+#ifndef IOT_WIFI_CONFIG
+#define IOT_WIFI_CONFIG "/wifi.conf"
+#endif
+
+#ifndef IOT_AUTH_CONFIG
+#define IOT_AUTH_CONFIG "/auth.conf"
+#endif
+
+#ifndef IOT_TITLE
+#define IOT_TITLE "IoT-Server"
+#endif
+
+#ifndef IOT_BAUD_RATE
+#define IOT_BAUD_RATE 115200
+#endif
 
 #include "Arduino.h"
 #include <map>
@@ -22,53 +42,35 @@ class IoT_Server {
     WebSocketsServer webSocket;
     IoT_Slider* controlLED;
     std::vector<IoT_Control*> controls;
-    std::map<const String, IoT_Control*> controlMap;
+    std::map<const char*, IoT_Control*> controlMap;
     String userName;
     String password;
-    String title;
     bool setupComplete;
     size_t bufferSize;
 
   public:
-    IoT_Server(const std::initializer_list<IoT_Control*> controls)
-        : IoT_Server(115200, "admin", "admin", "IoT-Server", controls) {
-    }
+    IoT_Server(const std::initializer_list<IoT_Control*> controls);
 
-    IoT_Server(const String title, const std::initializer_list<IoT_Control*> controls)
-        : IoT_Server(115200, "admin", "admin", title, controls) {
-    }
-
-    IoT_Server(const String userName, const String password, const String title,
-        const std::initializer_list<IoT_Control*> controls)
-        : IoT_Server(115200, userName, password, title, controls) {
-    }
-
-    IoT_Server(unsigned long baudRate, const String userName, const String password, const String title,
-        const std::initializer_list<IoT_Control*> controls);
-
-    void setup(String ssid, String password) {
-        setup(ssid, password, "", "");
-    }
-
-    void setup(String ssid1, String password1, String ssid2, String password2);
+    void setup();
     void loop();
 
-    void handleRequest(const String& uri, const HTTPMethod method, const std::function<void(void)> callback);
+    void handleRequest(const char* uri, const HTTPMethod method, const std::function<void(void)> callback);
 
     bool checkAuthentication();
 
     void sendNotification(const DynamicJsonDocument& response);
     void sendResponse(const DynamicJsonDocument& response);
 
-    const String getParameter(const String id);
+    const char* getParameter(const char* id);
 
-    const int getValue(const String id);
-    const int setValue(const String id, const int value);
+    const int getValue(const char* id);
+    const int setValue(const char* id, const int value);
 
     virtual ~IoT_Server();
 
   private:
-    void debugLine(const String text);
+    void debug(const char* text);
+    void debugLine(const char* text);
     const String getJsonString(const DynamicJsonDocument& response);
 
     IoT_Slider* findControlLED();
@@ -76,13 +78,16 @@ class IoT_Server {
     void disableControlLED();
     void blinkControlLED();
 
-    void setupWifi(String ssid, String password);
-    void setupWifi(String ssid1, String password1, String ssid2, String password2);
+    void setupControls();
+    void setupWifi();
+    void setupAuthentication();
+    void setupWebServer();
+    void setupWebSocket();
     void printUrl();
 
     void handleFiles();
-    const String getContentType(const String filename);
-    const String getMethodName(const HTTPMethod method);
+    const char* getContentType(const String& filename);
+    const char* getMethodName(const HTTPMethod method);
     void sendOptionsHeaders();
 
     void getTitle();
