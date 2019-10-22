@@ -15,8 +15,8 @@ function onLoad() {
 
 function getTitle() {
     $.get('http://' + host + '/title', function (response) {
-        window.document.title = title;
-        $('#title').html(title);
+        window.document.title = response.title;
+        $('#title').html(response.title);
     });
 }
 
