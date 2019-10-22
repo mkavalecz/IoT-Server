@@ -44,7 +44,7 @@ class IoT_Checkbox : public IoT_Control {
 
     virtual const int setValue(const int value) {
         onChange(value != 0);
-        return IoT_Control::setValue(value);
+        return IoT_Control::setValue(value != 0 ? 1 : value);
     }
 
     virtual const char* getTypeName() const {
