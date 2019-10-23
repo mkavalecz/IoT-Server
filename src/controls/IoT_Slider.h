@@ -13,40 +13,50 @@ class IoT_Slider : public IoT_Control {
     std::function<void(int)> onChange;
 
   public:
-    IoT_Slider(const char* id, const char* name)
-        : IoT_Slider(id, name, IOT_NOT_CONNECTED, false, 0, 0, 255, false) {
-    }
-
-    IoT_Slider(const char* id, const char* name, const bool inverted, const int initialValue, const int minValue,
-        const int maxValue)
-        : IoT_Slider(id, name, IOT_NOT_CONNECTED, inverted, initialValue, minValue, maxValue, false) {
-    }
-
-    IoT_Slider(const char* id, const char* name, const int initialValue, const int minValue, const int maxValue,
-        const bool showOnSettings)
-        : IoT_Slider(id, name, IOT_NOT_CONNECTED, false, initialValue, minValue, maxValue, showOnSettings) {
-    }
-
-    IoT_Slider(const char* id, const char* name, const bool inverted, const int initialValue, const int minValue,
-        const int maxValue, const bool showOnSettings)
-        : IoT_Slider(id, name, IOT_NOT_CONNECTED, inverted, initialValue, minValue, maxValue, showOnSettings) {
-    }
+    // initial, min, max, settigns
 
     IoT_Slider(const char* id, const char* name, const int pin)
-        : IoT_Slider(id, name, pin, false, 0, 0, 255, false) {
+        : IoT_Slider(id, name, pin, false, 0, 0, 1023, false) {
+    }
+
+    IoT_Slider(const char* id, const char* name, const int pin, const int initialValue)
+        : IoT_Slider(id, name, pin, false, initialValue, 0, 1023, false) {
+    }
+
+    IoT_Slider(
+        const char* id, const char* name, const int pin, const int initialValue, const int minValue, const int maxValue)
+        : IoT_Slider(id, name, pin, false, initialValue, minValue, maxValue, false) {
+    }
+
+    IoT_Slider(const char* id, const char* name, const int pin, const int initialValue, const int minValue,
+        const int maxValue, const bool showOnSettings)
+        : IoT_Slider(id, name, pin, false, initialValue, minValue, maxValue, showOnSettings) {
     }
 
     IoT_Slider(const char* id, const char* name, const int pin, const bool showOnSettings)
-        : IoT_Slider(id, name, pin, false, 0, 0, 255, showOnSettings) {
+        : IoT_Slider(id, name, pin, false, 0, 0, 1023, showOnSettings) {
     }
 
-    IoT_Slider(const char* id, const char* name, const int pin, const bool inverted, const int maxValue)
-        : IoT_Slider(id, name, pin, inverted, 0, 0, maxValue, false) {
+    IoT_Slider(const char* id, const char* name, const int pin, const int initialValue, const bool showOnSettings)
+        : IoT_Slider(id, name, pin, false, initialValue, 0, 1023, showOnSettings) {
     }
 
-    IoT_Slider(const char* id, const char* name, const int pin, const bool inverted, const int maxValue,
+    IoT_Slider(const char* id, const char* name, const int pin, const bool inverted, const bool showOnSettings)
+        : IoT_Slider(id, name, pin, inverted, 0, 0, 1023, showOnSettings) {
+    }
+
+    IoT_Slider(const char* id, const char* name, const int pin, const bool inverted, const int initialValue)
+        : IoT_Slider(id, name, pin, inverted, initialValue, 0, 1023, false) {
+    }
+
+    IoT_Slider(const char* id, const char* name, const int pin, const bool inverted, const int initialValue,
         const bool showOnSettings)
-        : IoT_Slider(id, name, pin, inverted, 0, 0, maxValue, showOnSettings) {
+        : IoT_Slider(id, name, pin, inverted, initialValue, 0, 1023, showOnSettings) {
+    }
+
+    IoT_Slider(const char* id, const char* name, const int pin, const bool inverted, const int initialValue,
+        const int minValue, const int maxValue)
+        : IoT_Slider(id, name, pin, inverted, initialValue, minValue, maxValue, false) {
     }
 
     IoT_Slider(const char* id, const char* name, const int pin, const bool inverted, const int initialValue,
