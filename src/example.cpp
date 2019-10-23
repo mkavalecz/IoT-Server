@@ -1,5 +1,3 @@
-#ifdef IOT_EXAMPLE_PUMPKIN
-
 #define IOT_TITLE "IoT LED Pumpkin"
 
 #include "IoT_Server.h"
@@ -59,5 +57,3 @@ void loop() {
         }
     }
 }
-
-#endif
