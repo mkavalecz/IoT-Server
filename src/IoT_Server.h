@@ -19,6 +19,10 @@
 #define IOT_AUTH_CONFIG "/config/auth.conf"
 #endif
 
+#ifndef IOT_DATA_PATH
+#define IOT_DATA_PATH "/data/"
+#endif
+
 #ifndef IOT_TITLE
 #define IOT_TITLE "IoT-Server"
 #endif
@@ -35,6 +39,7 @@
 #include <ArduinoJson.h>
 #include "controls/IoT_Control.h"
 #include "controls/IoT_Slider.h"
+#include "debug.h"
 
 class IoT_Server {
   private:
@@ -69,8 +74,6 @@ class IoT_Server {
     virtual ~IoT_Server();
 
   private:
-    void debug(const char* text);
-    void debugLine(const char* text);
     const String getJsonString(const DynamicJsonDocument& response);
 
     IoT_Slider* findControlLED();
@@ -93,5 +96,6 @@ class IoT_Server {
     void getTitle();
     void getControls();
     void setControls();
+    void saveControls();
 };
 #endif // IOT_SERVER_H

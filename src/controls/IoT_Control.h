@@ -2,6 +2,7 @@
 #define IOT_CONTROL_H
 
 #include "Arduino.h"
+#include "debug.h"
 
 #define IOT_NOT_CONNECTED -1
 #define IOT_STATUS_UNCHANGED -1
@@ -34,6 +35,49 @@ class IoT_Control {
         object[getId()]["showOnSettings"] = getShowOnSettings();
     }
 
+    virtual bool loadState() {
+        String path = IOT_DATA_PATH;
+        path += getId();
+        path += ".dat";
+
+        if (SPIFFS.exists(path)) {
+            File file = SPIFFS.open(path, "r");
+            if (!file) {
+                Serial.print("Failed to open file: ");
+                Serial.println(path);
+                return false;
+            }
+            value = file.parseInt();
+            file.close();
+
+            Debug::print("Loaded data from file: ");
+            Debug::println(path);
+            Debug::print("Value: ");
+            Debug::println(value);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    virtual bool saveState() {
+        String path = IOT_DATA_PATH;
+        path += getId();
+        path += ".dat";
+
+        File file = SPIFFS.open(path, "w");
+        if (!file) {
+            Serial.print("Failed to open file: ");
+            Serial.println(path);
+            return false;
+        }
+
+        file.print(getValue());
+        file.close();
+        return true;
+    }
+
     virtual const char* getId() const {
         return id;
     }
@@ -49,7 +93,7 @@ class IoT_Control {
     virtual const int setValue(int value) {
         this->value = value;
 
-#ifdef IoT_TRACE
+#ifdef IOT_TRACE
         Serial.println(getName() + "=" + this->value);
 #endif
 

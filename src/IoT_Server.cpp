@@ -44,10 +44,10 @@ void IoT_Server::loop() {
 }
 
 void IoT_Server::handleRequest(const char* uri, const HTTPMethod method, const std::function<void(void)> callback) {
-    debug("Handling request: ");
-    debug(uri);
-    debug(", ");
-    debugLine(getMethodName(method));
+    Debug::print("Handling request: ");
+    Debug::print(uri);
+    Debug::print(", ");
+    Debug::println(getMethodName(method));
 
     webServer.on(uri, method, callback);
     if (method != HTTP_OPTIONS) {
@@ -65,15 +65,15 @@ bool IoT_Server::checkAuthentication() {
 
 void IoT_Server::sendNotification(const DynamicJsonDocument& notification) {
     String notificationString = getJsonString(notification);
-    debug("Notification: ");
-    debugLine(notificationString.c_str());
+    Debug::print("Notification: ");
+    Debug::println(notificationString.c_str());
     webSocket.broadcastTXT(notificationString);
 }
 
 void IoT_Server::sendResponse(const DynamicJsonDocument& response) {
     String responseString = getJsonString(response);
-    debug("Response: ");
-    debugLine(responseString.c_str());
+    Debug::print("Response: ");
+    Debug::println(responseString.c_str());
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     webServer.send(200, "application/json", responseString);
 }
@@ -115,23 +115,11 @@ IoT_Server::~IoT_Server() {
     controlLED = NULL;
 }
 
-void IoT_Server::debug(const char* text) {
-#ifdef IoT_DEBUG
-    Serial.print(text);
-#endif
-}
-
-void IoT_Server::debugLine(const char* text) {
-#ifdef IoT_DEBUG
-    Serial.print(text);
-#endif
-}
-
 const String IoT_Server::getJsonString(const DynamicJsonDocument& json) {
     String jsonString = String();
     serializeJson(json, jsonString);
 
-#ifdef IoT_DEBUG
+#ifdef IOT_DEBUG
     response.printTo(Serial);
     Serial.println("");
 #endif
@@ -175,14 +163,14 @@ void IoT_Server::blinkControlLED() {
 }
 
 void IoT_Server::setupControls() {
-    debugLine("Initializing controls:");
+    Serial.println("Initializing controls:");
     for (IoT_Control* control : controls) {
         control->setup();
 
-        debug(control->getId());
-        debug(" (");
-        debug(control->getName());
-        debugLine(")");
+        Serial.print(control->getId());
+        Serial.print(" (");
+        Serial.print(control->getName());
+        Serial.println(")");
     }
 }
 
@@ -201,13 +189,13 @@ void IoT_Server::setupWifi() {
         ssid[i] = file.readStringUntil(';');
         password[i] = file.readStringUntil(';');
 
-        Serial.print("SSID ");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.println(ssid[i]);
+        Debug::print("SSID ");
+        Debug::print(i);
+        Debug::print(": ");
+        Debug::println(ssid[i]);
     }
     file.close();
-    Serial.println("End of wifi config.");
+    Debug::println("End of wifi config.");
 
     Serial.print("Waiting for one of the configured networks to show up.");
     bool found = false;
@@ -258,28 +246,30 @@ void IoT_Server::setupAuthentication() {
     userName = file.readStringUntil(';');
     password = file.readStringUntil(';');
 
-    Serial.print("Username: ");
-    Serial.println(userName);
+    Debug::print("Username: ");
+    Debug::println(userName);
 
     file.close();
-    Serial.println("End of authentication config.");
+    Debug::println("End of authentication config.");
 }
 
 void IoT_Server::setupWebServer() {
-    debugLine("Web server basic setup...");
+    Debug::println("Web server basic setup...");
     webServer.onNotFound([&]() { handleFiles(); });
     webServer.on("/get", HTTP_GET, [&]() { getControls(); });
     webServer.on("/get", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
     webServer.on("/set", HTTP_POST, [&]() { setControls(); });
     webServer.on("/set", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
+    webServer.on("/save", HTTP_POST, [&]() { saveControls(); });
+    webServer.on("/save", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
     webServer.on("/title", HTTP_GET, [&]() { getTitle(); });
     webServer.on("/title", HTTP_OPTIONS, [&]() { sendOptionsHeaders(); });
-    debugLine("Starting web server.");
+    Debug::println("Starting web server.");
     webServer.begin();
 }
 
 void IoT_Server::setupWebSocket() {
-    debugLine("Starting web socket.");
+    Debug::println("Starting web socket.");
     webSocket.begin();
 }
 
@@ -390,6 +380,19 @@ void IoT_Server::setControls() {
         if (webServer.hasArg(control->getId())) {
             control->setValue(webServer.arg(control->getId()).toInt());
             control->serializeJsonTo(response);
+        }
+    }
+    sendResponse(response);
+}
+
+void IoT_Server::saveControls() {
+    if (!checkAuthentication()) {
+        return;
+    }
+    DynamicJsonDocument response(bufferSize);
+    for (IoT_Control* control : controls) {
+        if (webServer.hasArg(control->getId())) {
+            response[control->getId()] = control->saveState();
         }
     }
     sendResponse(response);

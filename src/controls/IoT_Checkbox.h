@@ -26,6 +26,11 @@ class IoT_Checkbox : public IoT_Control {
     }
 
     virtual void setup() {
+        if (IoT_Control::loadState()) {
+            if (onChange) {
+                onChange(value);
+            }
+        }
         if (pin == IOT_NOT_CONNECTED) {
             return;
         }

@@ -1,5 +1,4 @@
-#define EXAMPLE
-#ifdef EXAMPLE
+#ifdef IOT_EXAMPLE_BASIC
 
 #define IOT_TITLE "IoT-Server"
 

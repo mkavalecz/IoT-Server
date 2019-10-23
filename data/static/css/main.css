@@ -32,3 +32,7 @@ input[type=range]::-moz-range-thumb {
 .big-btn:active {
     background: green;
 }
+
+.save-state {
+    font-weight: bold;
+}

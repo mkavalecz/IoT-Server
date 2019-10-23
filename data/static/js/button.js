@@ -1,8 +1,11 @@
 var buttonTemplate = '<div class="form-group">' +
-    '<div class="row text-center">' +
+    '<div class="row justify-content-center text-center">' +
     '<div class="col form-group">' +
     '<label for="#id#Value" class="font-weight-bold">#name#</label>' +
-    '<div class="w-100"></div>' +
+    '</div>' +
+    '</div>' +
+    '<div class="row justify-content-center text-center">' +
+    '<div class="col form-group">' +
     '<button id="#id#Value" type="button" class="btn big-btn"></button>' +
     '</div>' +
     '</div>' +
@@ -16,8 +19,8 @@ function initButton(controlId, controlData) {
             selector = settingsSelector;
         }
         $(selector).append(buttonTemplate
-            .replace(new RegExp("#id#", 'g'), controlId)
-            .replace(new RegExp("#name#", 'g'), controlData.name)
+            .replace(new RegExp('#id#', 'g'), controlId)
+            .replace(new RegExp('#name#', 'g'), controlData.name)
         );
         valueInput = $('#' + controlId + 'Value');
     }
@@ -31,8 +34,8 @@ function initButton(controlId, controlData) {
 
 function updateButton(controlId, controlData) {
     if (controlData.value) {
-        $('#' + controlId + 'Value').addClass("active");
+        $('#' + controlId + 'Value').addClass('active');
     } else {
-        $('#' + controlId + 'Value').removeClass("active");
+        $('#' + controlId + 'Value').removeClass('active');
     }
 }

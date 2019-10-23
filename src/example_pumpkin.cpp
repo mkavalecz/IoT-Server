@@ -1,5 +1,4 @@
-//#define PUMPKIN
-#ifdef PUMPKIN
+#ifdef IOT_EXAMPLE_PUMPKIN
 
 #define IOT_TITLE "IoT LED Pumpkin"
 
