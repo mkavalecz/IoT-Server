@@ -1,3 +1,6 @@
+var host = (window.location.protocol !== 'file:') ? window.location.host : 'wemos'; // change "wemos" to your ip/domain for debugging
+var protocol = window.location.protocol + '//';
+
 var controlSelector = '#controls';
 var settingsSelector = '#settings';
 
@@ -19,14 +22,14 @@ function onLoad() {
 }
 
 function getTitle() {
-    $.get('/title', function (response) {
+    $.get(protocol + host + '/title', function (response) {
         window.document.title = response.title;
         $('#title').html(response.title);
     });
 }
 
 function getValues() {
-    $.get('/get', function (response) {
+    $.get(protocol + host + '/get', function (response) {
         controls = response;
         initGui();
     });
@@ -52,7 +55,7 @@ function initGui() {
 }
 
 function initWebSocket() {
-    new WebSocket('ws://' + window.location.host + ':8080').addEventListener('message', function (event) {
+    new WebSocket(protocol === 'https://' ? ('wss://' + host + "/ws") : ('ws://' + host + ':8080')).addEventListener('message', function (event) {
         updateGui(JSON.parse(event.data));
     });
 }
@@ -78,7 +81,7 @@ function setValues(data) {
         return;
     }
 
-    setControlValuesRequest = $.post('/set', data, function (response) {
+    setControlValuesRequest = $.post(protocol + host + '/set', data, function (response) {
         updateGui(response);
     }).always(function () {
         setControlValuesRequest = undefined;
@@ -115,7 +118,7 @@ function saveValues(data) {
         return;
     }
 
-    saveControlValuesRequest = $.post('/save', data, function (response) {
+    saveControlValuesRequest = $.post(protocol + host + '/save', data, function (response) {
         showSaveResults(response);
     }).always(function () {
         saveControlValuesRequest = undefined;
