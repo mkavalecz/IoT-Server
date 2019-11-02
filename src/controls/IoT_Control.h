@@ -9,7 +9,7 @@
 
 class IoT_Control {
   protected:
-    const char* id;
+    String id;
     const char* name;
     const int pin;
     const bool showOnSettings;
@@ -17,7 +17,7 @@ class IoT_Control {
     int value;
 
   public:
-    IoT_Control(const char* id, const char* name, const int pin, const bool showOnSettings, const int value)
+    IoT_Control(String id, const char* name, const int pin, const bool showOnSettings, const int value)
         : id(id)
         , name(name)
         , pin(pin)
@@ -37,50 +37,7 @@ class IoT_Control {
         object[getId()]["showOnSettings"] = getShowOnSettings();
     }
 
-    virtual bool loadState() {
-        String path = IOT_DATA_PATH;
-        path += getId();
-        path += ".dat";
-
-        if (SPIFFS.exists(path)) {
-            File file = SPIFFS.open(path, "r");
-            if (!file) {
-                Serial.print("Failed to open file: ");
-                Serial.println(path);
-                return false;
-            }
-            value = file.parseInt();
-            file.close();
-
-            Debug::print("Loaded data from file: ");
-            Debug::println(path);
-            Debug::print("Value: ");
-            Debug::println(value);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    virtual bool saveState() {
-        String path = IOT_DATA_PATH;
-        path += getId();
-        path += ".dat";
-
-        File file = SPIFFS.open(path, "w");
-        if (!file) {
-            Serial.print("Failed to open file: ");
-            Serial.println(path);
-            return false;
-        }
-
-        file.print(getValue());
-        file.close();
-        return true;
-    }
-
-    virtual const char* getId() const {
+    virtual String getId() const {
         return id;
     }
 

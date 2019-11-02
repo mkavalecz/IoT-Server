@@ -14,11 +14,11 @@ class IoT_Button : public IoT_Control {
     std::function<void(bool)> onChange;
 
   public:
-    IoT_Button(const char* id, const char* name, const int pin)
+    IoT_Button(String id, const char* name, const int pin)
         : IoT_Button(id, name, pin, false) {
     }
 
-    IoT_Button(const char* id, const char* name, const int pin, const bool showOnSettings)
+    IoT_Button(String id, const char* name, const int pin, const bool showOnSettings)
         : IoT_Control(id, name, pin, showOnSettings, 0)
         , pressedState(LOW)
         , debounceDelay(50)

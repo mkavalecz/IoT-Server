@@ -6,7 +6,7 @@
 #define IOT_NUM_SSID 5
 #define IOT_WIFI_CONFIG "/config/wifi.conf"
 #define IOT_AUTH_CONFIG "/config/auth.conf"
-#define IOT_DATA_PATH "/data/"
+#define IOT_DATA_PATH "/data/state.dat"
 #define IOT_BAUD_RATE 115200
 
 #include "Arduino.h"
@@ -25,7 +25,8 @@ class IoT_Server {
     WebSocketsServer webSocket;
     IoT_Slider* controlLED;
     std::vector<IoT_Control*> controls;
-    std::map<const char*, IoT_Control*> controlMap;
+    std::map<String, IoT_Control*> controlMap;
+    std::map<String, int> controlSavedStateMap;
     const char* title;
     String userName;
     String password;
@@ -51,8 +52,8 @@ class IoT_Server {
 
     const char* getParameter(const char* id);
 
-    const int getValue(const char* id);
-    const int setValue(const char* id, const int value);
+    const int getValue(String id);
+    const int setValue(String id, const int value);
 
     virtual ~IoT_Server();
 
@@ -65,6 +66,7 @@ class IoT_Server {
     void blinkControlLED();
 
     void setupControls();
+    void loadControlState();
     void setupWifi();
     void setupAuthentication();
     void setupWebServer();

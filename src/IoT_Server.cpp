@@ -22,6 +22,7 @@ void IoT_Server::setup() {
     enableControlLED();
 
     setupControls();
+    loadControlState();
     setupWifi();
     setupAuthentication();
     setupWebServer();
@@ -84,8 +85,8 @@ const char* IoT_Server::getParameter(const char* id) {
     return webServer.arg(id).c_str();
 }
 
-const int IoT_Server::getValue(const char* id) {
-    std::map<const char*, IoT_Control*>::iterator it = controlMap.find(id);
+const int IoT_Server::getValue(String id) {
+    std::map<String, IoT_Control*>::iterator it = controlMap.find(id);
     if (it == controlMap.end()) {
         return 0;
     }
@@ -93,8 +94,8 @@ const int IoT_Server::getValue(const char* id) {
     return it->second->getValue();
 }
 
-const int IoT_Server::setValue(const char* id, const int value) {
-    std::map<const char*, IoT_Control*>::iterator it = controlMap.find(id);
+const int IoT_Server::setValue(String id, const int value) {
+    std::map<String, IoT_Control*>::iterator it = controlMap.find(id);
     if (it == controlMap.end()) {
         return 0;
     }
@@ -124,7 +125,7 @@ const String IoT_Server::getJsonString(const DynamicJsonDocument& json) {
 }
 
 IoT_Slider* IoT_Server::findControlLED() {
-    std::map<const char*, IoT_Control*>::iterator it = controlMap.find(IOT_CONTROL_LED);
+    std::map<String, IoT_Control*>::iterator it = controlMap.find(IOT_CONTROL_LED);
     if (it != controlMap.end()) {
         return (IoT_Slider*) it->second;
     }
@@ -155,6 +156,42 @@ void IoT_Server::blinkControlLED() {
         if (!setupComplete) {
             controlLED->loop();
         }
+    }
+}
+
+void IoT_Server::loadControlState() {
+    if (SPIFFS.exists(IOT_DATA_PATH)) {
+        Serial.println("Reading saved state from file.");
+
+        File file = SPIFFS.open(IOT_DATA_PATH, "r");
+        if (!file) {
+            Serial.print("Failed to open state file: ");
+            Serial.println(IOT_DATA_PATH);
+            return;
+        }
+
+        while (file.position() != file.size()) {
+            String controlId = file.readStringUntil(';');
+            int controlValue = file.parseInt();
+
+            std::map<String, IoT_Control*>::iterator it = controlMap.find(controlId);
+            if (it == controlMap.end()) {
+                Serial.print("Found saved state for invalid controlId: ");
+                Serial.println(controlId);
+                continue;
+            }
+
+            Serial.print(controlId);
+            Serial.print(": ");
+            Serial.println(controlValue);
+
+            controlSavedStateMap[it->second->getId()] = controlValue;
+            it->second->setValue(controlValue);
+        }
+
+        file.close();
+
+        Serial.println("Loaded saved state from file.");
     }
 }
 
@@ -384,11 +421,34 @@ void IoT_Server::saveControls() {
     if (!checkAuthentication()) {
         return;
     }
-    DynamicJsonDocument response(bufferSize);
+
     for (IoT_Control* control : controls) {
         if (webServer.hasArg(control->getId())) {
-            response[control->getId()] = control->saveState();
+            controlSavedStateMap[control->getId()] = control->getValue();
         }
     }
+
+    DynamicJsonDocument response(bufferSize);
+
+    File file = SPIFFS.open(IOT_DATA_PATH, "w");
+    if (!file) {
+        Serial.print("Failed to open state file: ");
+        Serial.println(IOT_DATA_PATH);
+        sendResponse(response);
+        return;
+    }
+
+    std::map<String, int>::iterator it = controlSavedStateMap.begin();
+    while (it != controlSavedStateMap.end()) {
+        file.print(it->first);
+        file.print(';');
+        file.print(it->second);
+        if (webServer.hasArg(it->first)) {
+            response[it->first] = 1;
+        }
+        it++;
+    }
+    file.close();
+
     sendResponse(response);
 }
