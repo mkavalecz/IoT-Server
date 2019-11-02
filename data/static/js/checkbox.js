@@ -55,7 +55,7 @@ function initCheckbox(controlId, controlData) {
 }
 
 function updateCheckbox(controlId, controlData) {
-    $('#' + controlId + 'Value').prop('checked', controlData.value === 1);
+    $('#' + controlId + 'Value').prop('checked', controlData.value === 1).change();
 }
 
 function showCheckboxSaveResults(controlId, success) {

@@ -38,11 +38,19 @@ class IoT_Checkbox : public IoT_Control {
     }
 
     virtual const int loop() {
-        if (pin == IOT_NOT_CONNECTED) {
-            return IOT_STATUS_UNCHANGED;
+        if (value != LOW) {
+            value = HIGH;
         }
 
-        digitalWrite(pin, (value != 0) ? HIGH : LOW);
+        if (value != oldValue) {
+            oldValue = value;
+
+            if (pin != IOT_NOT_CONNECTED) {
+                digitalWrite(pin, value);
+            }
+
+            return value;
+        }
 
         return IOT_STATUS_UNCHANGED;
     }

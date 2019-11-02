@@ -85,15 +85,20 @@ class IoT_Slider : public IoT_Control {
     }
 
     virtual const int loop() {
-        if (pin == IOT_NOT_CONNECTED) {
-            return IOT_STATUS_UNCHANGED;
+        if (value != oldValue) {
+            oldValue = value;
+
+            if (pin != IOT_NOT_CONNECTED) {
+                if (inverted) {
+                    analogWrite(pin, maxValue - value);
+                } else {
+                    analogWrite(pin, value);
+                }
+            }
+
+            return value;
         }
 
-        if (inverted) {
-            analogWrite(pin, maxValue - value);
-        } else {
-            analogWrite(pin, value);
-        }
         return IOT_STATUS_UNCHANGED;
     }
 

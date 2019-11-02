@@ -13,6 +13,7 @@ class IoT_Control {
     const char* name;
     const int pin;
     const bool showOnSettings;
+    int oldValue;
     int value;
 
   public:
@@ -21,6 +22,7 @@ class IoT_Control {
         , name(name)
         , pin(pin)
         , showOnSettings(showOnSettings)
+        , oldValue(value)
         , value(value) {
     }
 
@@ -102,6 +104,10 @@ class IoT_Control {
 
     virtual const int getValue() const {
         return value;
+    }
+
+    virtual const int getOldValue() const {
+        return oldValue;
     }
 
     virtual ~IoT_Control() {

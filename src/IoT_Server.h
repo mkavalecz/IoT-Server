@@ -1,35 +1,13 @@
 #ifndef IOT_SERVER_H
 #define IOT_SERVER_H
 
-#ifdef IOT_TRACE
-#define IOT_DEBUG
-#endif
-
 #define IOT_CONTROL_LED "CONTROL_LED"
 
-#ifndef IOT_NUM_SSID
 #define IOT_NUM_SSID 5
-#endif
-
-#ifndef IOT_WIFI_CONFIG
 #define IOT_WIFI_CONFIG "/config/wifi.conf"
-#endif
-
-#ifndef IOT_AUTH_CONFIG
 #define IOT_AUTH_CONFIG "/config/auth.conf"
-#endif
-
-#ifndef IOT_DATA_PATH
 #define IOT_DATA_PATH "/data/"
-#endif
-
-#ifndef IOT_TITLE
-#define IOT_TITLE "IoT-Server"
-#endif
-
-#ifndef IOT_BAUD_RATE
 #define IOT_BAUD_RATE 115200
-#endif
 
 #include "Arduino.h"
 #include <map>
@@ -48,13 +26,18 @@ class IoT_Server {
     IoT_Slider* controlLED;
     std::vector<IoT_Control*> controls;
     std::map<const char*, IoT_Control*> controlMap;
+    const char* title;
     String userName;
     String password;
     bool setupComplete;
     size_t bufferSize;
 
   public:
-    IoT_Server(const std::initializer_list<IoT_Control*> controls);
+    IoT_Server(const std::initializer_list<IoT_Control*> controls)
+        : IoT_Server("IoT-Server", controls) {
+    }
+
+    IoT_Server(const char* title, const std::initializer_list<IoT_Control*> controls);
 
     void setup();
     void loop();

@@ -81,9 +81,7 @@ function setValues(data) {
         return;
     }
 
-    setControlValuesRequest = $.post(protocol + host + '/set', data, function (response) {
-        updateGui(response);
-    }).always(function () {
+    setControlValuesRequest = $.post(protocol + host + '/set', data).always(function () {
         setControlValuesRequest = undefined;
     });
 }

@@ -19,10 +19,17 @@ int greenMax = 1023;
 int yellowMin = 0;
 int yellowMax = 1023;
 
-IoT_Server server(
+IoT_Server server("IoT LED Pumpkin",
     {new IoT_Slider(IOT_CONTROL_LED, "Control LED", D4, true, true), new IoT_Slider("red", "Eyes - Red", D6),
         new IoT_Slider("green", "Nose - Green", D8), new IoT_Slider("yellow", "Mouth - Yellow", D7),
-        (new IoT_Checkbox("flicker", "Flicker", 0))->setOnChange([&](const bool value) { flicker = value; }),
+        (new IoT_Checkbox("flicker", "Flicker", 0))->setOnChange([&](const bool value) {
+            flicker = value;
+            if (!flicker) {
+                server.setValue("red", 0);
+                server.setValue("green", 0);
+                server.setValue("yellow", 0);
+            }
+        }),
         (new IoT_Slider("delayCounter", "Delay Counter", IOT_NOT_CONNECTED, counterMax, 1000, 10000, true))
             ->setOnChange([&](const int value) { counterMax = value; }),
         (new IoT_Slider("redMin", "Red Minimum flicker", IOT_NOT_CONNECTED, redMin, true))

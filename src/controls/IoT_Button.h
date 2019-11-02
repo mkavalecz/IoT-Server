@@ -9,7 +9,6 @@ class IoT_Button : public IoT_Control {
     unsigned int debounceDelay;
 
     unsigned long lastDebounceTime;
-    int oldValue;
 
     std::function<void()> onPress;
     std::function<void(bool)> onChange;
@@ -23,8 +22,7 @@ class IoT_Button : public IoT_Control {
         : IoT_Control(id, name, pin, showOnSettings, 0)
         , pressedState(LOW)
         , debounceDelay(50)
-        , lastDebounceTime(0)
-        , oldValue(0) {
+        , lastDebounceTime(0) {
     }
 
     IoT_Button* setPressedState(const int pressedState) {
@@ -60,15 +58,19 @@ class IoT_Button : public IoT_Control {
 
     virtual const int loop() {
         if (pin == IOT_NOT_CONNECTED) {
+            if (value != oldValue) {
+                oldValue = value;
+                return value;
+            }
             return IOT_STATUS_UNCHANGED;
         }
+
         bool measured = (digitalRead(pin) == pressedState);
 
         if (measured != oldValue) {
             lastDebounceTime = millis();
+            oldValue = measured;
         }
-
-        oldValue = measured;
 
         if ((millis() - lastDebounceTime) > debounceDelay) {
             if (measured != value) {

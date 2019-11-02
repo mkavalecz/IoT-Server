@@ -1,9 +1,10 @@
 #include "IoT_Server.h"
 
-IoT_Server::IoT_Server(const std::initializer_list<IoT_Control*> controls)
+IoT_Server::IoT_Server(const char* title, const std::initializer_list<IoT_Control*> controls)
     : webServer(80)
     , webSocket(8080)
     , controls(controls)
+    , title(title)
     , setupComplete(false)
     , bufferSize(JSON_OBJECT_SIZE(controls.size()) + (controls.size() * JSON_OBJECT_SIZE(10)) + 100) {
 
@@ -36,6 +37,7 @@ void IoT_Server::loop() {
         int status = control->loop();
         if (status != IOT_STATUS_UNCHANGED) {
             DynamicJsonDocument notification(bufferSize);
+            control->serializeJsonTo(notification);
             sendNotification(notification);
         }
     }
@@ -97,13 +99,7 @@ const int IoT_Server::setValue(const char* id, const int value) {
         return 0;
     }
 
-    int result = it->second->setValue(value);
-
-    DynamicJsonDocument notification(bufferSize);
-    it->second->serializeJsonTo(notification);
-    sendNotification(notification);
-
-    return result;
+    return it->second->setValue(value);
 }
 
 IoT_Server::~IoT_Server() {
@@ -355,8 +351,8 @@ void IoT_Server::getTitle() {
     if (!checkAuthentication()) {
         return;
     }
-    DynamicJsonDocument response(bufferSize);
-    response["title"] = IOT_TITLE;
+    DynamicJsonDocument response(100);
+    response["title"] = title;
     sendResponse(response);
 }
 
@@ -375,14 +371,13 @@ void IoT_Server::setControls() {
     if (!checkAuthentication()) {
         return;
     }
-    DynamicJsonDocument response(bufferSize);
     for (IoT_Control* control : controls) {
         if (webServer.hasArg(control->getId())) {
             control->setValue(webServer.arg(control->getId()).toInt());
-            control->serializeJsonTo(response);
         }
     }
-    sendResponse(response);
+    webServer.sendHeader("Access-Control-Allow-Origin", "*");
+    webServer.send(200, "application/json", "{}");
 }
 
 void IoT_Server::saveControls() {
